@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Grid_Builder : MonoBehaviour
 {
@@ -42,6 +43,9 @@ public class Grid_Builder : MonoBehaviour
         CreatePoints();
         CreateConnections();
         RemoveRandomConnections();
+
+        currPoint = gridPoints[0];
+        edges.Add(currPoint);
     }
 
     private void CreatePoints()
@@ -153,9 +157,14 @@ public class Grid_Builder : MonoBehaviour
         List<Point> connsToRemove = new List<Point>();
         foreach (Point point in gridPoints)
         {
+            if(point.Connections.Count <= 4)
+            {
+                continue;
+            }
+
             foreach (Point connection in point.Connections)
             {
-                if (connsToRemove.Count < 3 && connection.Connections.Count > 4 && Random.Range(0f, 1f) >= 0.75f)
+                if (point.Connections.Count - connsToRemove.Count > 4 && connection.Connections.Count > 4)
                 {
                     connsToRemove.Add(connection);
                 }
@@ -168,12 +177,22 @@ public class Grid_Builder : MonoBehaviour
                 point.RemoveConnectionMutual(removed);
             }
             connsToRemove.Clear();
+
+            if (point.Connections.Count <= 3)
+            {
+                Debug.LogError(point.Connections.Count);
+            }
         }
     }
 
     private void CreateShapes()
     {
-
+        /*
+         * foreach point
+         *      foreach connection in point Connections
+         *          check if 
+         * 
+         */
     }
 
     private void SubdivideShapes()
@@ -181,7 +200,24 @@ public class Grid_Builder : MonoBehaviour
 
     }
 
-    public void OnDrawGizmosSelected()
+    Point currPoint;
+    List<Point> edges = new List<Point>();
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            currPoint.Connections = currPoint.Connections.OrderBy(p => Mathf.Atan2(edges[edges.Count - 1].Y - p.Y, edges[edges.Count - 1].X - p.X)).ToList<Point>();
+
+            if (!edges.Contains(currPoint.Connections[0]))
+            {
+                edges.Add(currPoint.Connections[0]);
+                currPoint = currPoint.Connections[0];
+            }
+        }
+    }
+
+    public void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
         foreach (Point point in gridPoints)
@@ -190,6 +226,12 @@ public class Grid_Builder : MonoBehaviour
             {
                 Gizmos.DrawLine(PointToVec3(point), PointToVec3(connection));
             }
+        }
+
+        Gizmos.color = Color.red;
+        for(int i = 1; i < edges.Count; i++)
+        {
+            Gizmos.DrawLine(PointToVec3(edges[i-1]), PointToVec3(edges[i]));
         }
     }
 
