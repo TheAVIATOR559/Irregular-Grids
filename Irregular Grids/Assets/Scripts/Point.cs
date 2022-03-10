@@ -27,11 +27,13 @@ public class Point
 
     public float X, Y;
     public List<Point> Connections;
+    public bool IsModifiable = true;
 
-    public Point(float x, float y)
+    public Point(float x, float y, bool isModifiable = true)
     {
         X = x;
         Y = y;
+        IsModifiable = isModifiable;
         Connections = new List<Point>();
     }
 
