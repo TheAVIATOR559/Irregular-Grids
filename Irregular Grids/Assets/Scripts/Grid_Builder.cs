@@ -21,6 +21,13 @@ public class Grid_Builder : MonoBehaviour
     private float cos240;
     private float cos300;
 
+    private List<Point> subPoints = new List<Point>();
+
+    [SerializeField] float subPointChance = 0.2f;
+    [SerializeField] float subPointRigidityChance = 0.1f;
+    [SerializeField] int minConnectionCount = 4;
+    [SerializeField] float minPointDistance = 0.35f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -37,11 +44,6 @@ public class Grid_Builder : MonoBehaviour
         cos180 = Mathf.Cos(3.14159f);
         cos240 = Mathf.Cos(4.18879f);
         cos300 = Mathf.Cos(5.23599f);
-
-        CreatePoints();
-        CreateConnections();
-        CreateSubPoints();
-        RemoveRandomConnections();
     }
 
     private void CreatePoints()
@@ -87,23 +89,23 @@ public class Grid_Builder : MonoBehaviour
                         if(i == 6)
                         {
                             //Debug.Log(k + "::" + mainPoints[k-1]);
-                            secondaryPoints.Add(new Point(mainPoints[k - 1].X + (j / i) * (mainPoints[k - 6].X - mainPoints[k - 1].X), mainPoints[k - 1].Y + (j / i) * (mainPoints[k - 6].Y - mainPoints[k - 1].Y), false));
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k - 6].Position.x - mainPoints[k - 1].Position.x), mainPoints[k - 1].Position.y + (j / i) * (mainPoints[k - 6].Position.y - mainPoints[k - 1].Position.y), false));
                         }
                         else
                         {
                             //Debug.Log(k + "::" + mainPoints[k-1]);
-                            secondaryPoints.Add(new Point(mainPoints[k - 1].X + (j / i) * (mainPoints[k - 6].X - mainPoints[k - 1].X), mainPoints[k - 1].Y + (j / i) * (mainPoints[k - 6].Y - mainPoints[k - 1].Y)));
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k - 6].Position.x - mainPoints[k - 1].Position.x), mainPoints[k - 1].Position.y + (j / i) * (mainPoints[k - 6].Position.y - mainPoints[k - 1].Position.y)));
                         }
                     }
                     else
                     {
                         if(i == 6)
                         {
-                            secondaryPoints.Add(new Point(mainPoints[k - 1].X + (j / i) * (mainPoints[k].X - mainPoints[k - 1].X), mainPoints[k - 1].Y + (j / i) * (mainPoints[k].Y - mainPoints[k - 1].Y), false));
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k].Position.x - mainPoints[k - 1].Position.x), mainPoints[k - 1].Position.y + (j / i) * (mainPoints[k].Position.y - mainPoints[k - 1].Position.y), false));
                         }
                         else
                         {
-                            secondaryPoints.Add(new Point(mainPoints[k - 1].X + (j / i) * (mainPoints[k].X - mainPoints[k - 1].X), mainPoints[k - 1].Y + (j / i) * (mainPoints[k].Y - mainPoints[k - 1].Y)));
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k].Position.x - mainPoints[k - 1].Position.x), mainPoints[k - 1].Position.y + (j / i) * (mainPoints[k].Position.y - mainPoints[k - 1].Position.y)));
                         }
                     }
                 }
@@ -127,27 +129,27 @@ public class Grid_Builder : MonoBehaviour
                 {
                     continue;
                 }
-                else if (gridPoints[i].IsNearEnough(point.X + sin0, point.Y + cos0))
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin0, point.Position.y + cos0))
                 {
                     point.AddConnection(gridPoints[i]);
                 }
-                else if (gridPoints[i].IsNearEnough(point.X + sin60, point.Y + cos60))
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin60, point.Position.y + cos60))
                 {
                     point.AddConnection(gridPoints[i]);
                 }
-                else if (gridPoints[i].IsNearEnough(point.X + sin120, point.Y + cos120))
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin120, point.Position.y + cos120))
                 {
                     point.AddConnection(gridPoints[i]);
                 }
-                else if (gridPoints[i].IsNearEnough(point.X + sin180, point.Y + cos180))
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin180, point.Position.y + cos180))
                 {
                     point.AddConnection(gridPoints[i]);
                 }
-                else if (gridPoints[i].IsNearEnough(point.X + sin240, point.Y + cos240))
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin240, point.Position.y + cos240))
                 {
                     point.AddConnection(gridPoints[i]);
                 }
-                else if (gridPoints[i].IsNearEnough(point.X + sin300, point.Y + cos300))
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin300, point.Position.y + cos300))
                 {
                     point.AddConnection(gridPoints[i]);
                 }
@@ -178,7 +180,7 @@ public class Grid_Builder : MonoBehaviour
          *                      create a new point in the middle of the three points(mainPoint, neighbor, local left point)
          */
 
-        List<Point> subPoints = new List<Point>();
+        ShuffleGridPoints();
 
         foreach (Point start in gridPoints)
         {
@@ -191,9 +193,9 @@ public class Grid_Builder : MonoBehaviour
                         continue;
                     }
 
-                    if(localLeft.Connections.Contains(start) && IsLeft(start, neighbor, localLeft) && Random.Range(0f, 1f) <= 0.25f)//TODO add random fail chance to this???
+                    if(localLeft.Connections.Contains(start) && IsLeft(start.Position, neighbor.Position, localLeft.Position) && Random.Range(0f, 1f) <= subPointChance)
                     {
-                        Point newPoint = new Point((start.X + neighbor.X + localLeft.X) / 3, (start.Y + neighbor.Y + localLeft.Y) / 3);
+                        Point newPoint = new Point((start.Position.x + neighbor.Position.x + localLeft.Position.x) / 3, (start.Position.y + neighbor.Position.y + localLeft.Position.y) / 3, (Random.Range(0, 1f) >= subPointRigidityChance));
                         subPoints.Add(newPoint);
                         newPoint.AddConnection(start);
                         newPoint.AddConnection(neighbor);
@@ -218,16 +220,20 @@ public class Grid_Builder : MonoBehaviour
             }
         }
         //Debug.Log(test.Count);
+    }
 
-        foreach(Point point in subPoints)
+    private void UpdateConnections()
+    {
+        foreach (Point point in subPoints)
         {
-            foreach(Point connection in point.Connections)
+            foreach (Point connection in point.Connections)
             {
                 connection.AddConnection(point);
             }
         }
 
         gridPoints.AddRange(subPoints);
+        subPoints.Clear();
     }
 
     private void RemoveRandomConnections()
@@ -237,7 +243,7 @@ public class Grid_Builder : MonoBehaviour
         List<Point> connsToRemove = new List<Point>();
         foreach (Point point in gridPoints)
         {
-            if(point.Connections.Count <= 4)
+            if(point.Connections.Count <= minConnectionCount)
             {
                 continue;
             }
@@ -249,7 +255,7 @@ public class Grid_Builder : MonoBehaviour
                     continue;
                 }
 
-                if (point.Connections.Count - connsToRemove.Count > 4 && connection.Connections.Count > 4)
+                if (point.Connections.Count - connsToRemove.Count > minConnectionCount && connection.Connections.Count > minConnectionCount)
                 {
                     connsToRemove.Add(connection);
                 }
@@ -263,7 +269,7 @@ public class Grid_Builder : MonoBehaviour
             }
             connsToRemove.Clear();
 
-            if (point.Connections.Count <= 3)
+            if (point.Connections.Count < minConnectionCount)
             {
                 Debug.LogError(point.Connections.Count);
             }
@@ -289,26 +295,62 @@ public class Grid_Builder : MonoBehaviour
         {
             if(point.IsModifiable)
             {
-                Vector2 newPos = new Vector2(point.X, point.Y);
+                //Vector2 newPos = point.Position;
+                Vector2 newPos = Vector2.zero;
 
                 foreach (Point neighbor in point.Connections)
                 {
-                    newPos.x += neighbor.X;
-                    newPos.y += neighbor.Y;
+                    newPos += neighbor.Position;
                 }
 
-                newPos = newPos / (point.Connections.Count + 1);
-                point.X = newPos.x;
-                point.Y = newPos.y;
+                //newPos = newPos / (point.Connections.Count + 1);
+                newPos = newPos / point.Connections.Count;
+
+                //if distance to nearest neighbor is less than 0.35f, dont move
+                point.Connections = point.Connections.OrderBy(x => Vector2.Distance(newPos, x.Position)).ToList();
+
+                if(Vector2.Distance(newPos, point.Connections[0].Position) > minPointDistance)
+                {
+                    point.Position = newPos;
+                }
             }
         }
     }
+
+    [SerializeField] private int clickCount = 0;
 
     private void Update()
     {
         if (Input.GetMouseButtonUp(0))
         {
-            RebalanceGrid();
+            switch(clickCount)
+            {
+                case 0:
+                    CreatePoints();
+                    break;
+                case 1:
+                    CreateConnections();
+                    break;
+                case 2:
+                    CreateSubPoints();
+                    break;
+                case 3:
+                    UpdateConnections();
+                    break;
+                case 4:
+                    RemoveRandomConnections();
+                    break;
+                default:
+                    RebalanceGrid();
+                    break;
+            }
+            clickCount++;
+        }
+        else if(Input.GetMouseButtonUp(1))
+        {
+            gridPoints.Clear();
+            subPoints.Clear();
+            clickCount = 0;
         }
     }
 
@@ -335,15 +377,28 @@ public class Grid_Builder : MonoBehaviour
             }
             Gizmos.DrawSphere(PointToVec3(point), 0.1f);
         }
+
+        foreach (Point point in subPoints)
+        {
+            if (point.IsModifiable)
+            {
+                Gizmos.color = Color.yellow;
+            }
+            else
+            {
+                Gizmos.color = Color.red;
+            }
+            Gizmos.DrawSphere(PointToVec3(point), 0.1f);
+        }
     }
 
     private Vector3 PointToVec3(Point point)
     {
-        return new Vector3(point.X, 0, point.Y);
+        return new Vector3(point.Position.x, 0, point.Position.y);
     }
 
-    private bool IsLeft(Point a, Point b, Point c)
+    private bool IsLeft(Vector2 a, Vector2 b, Vector2 c)
     {
-        return ((b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X)) > 0;
+        return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) > 0;
     }
 }
