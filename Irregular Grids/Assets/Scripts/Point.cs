@@ -83,6 +83,7 @@ public class Point
 
     public bool IsNearEnough(float x, float z)
     {
+        //Debug.Log((Mathf.Abs(this.Position.x - x) <= COMPARISON_TOLERANCE) + "::" + (Mathf.Abs(this.Position.z - z) <= COMPARISON_TOLERANCE));
         if (Mathf.Abs(this.Position.x - x) <= COMPARISON_TOLERANCE
             && Mathf.Abs(this.Position.z - z) <= COMPARISON_TOLERANCE)
         {

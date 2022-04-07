@@ -10,7 +10,8 @@ public class Grid_Builder : MonoBehaviour
         FLAT,
         CONE,
         RANDOM,
-        PERLIN
+        PERLIN,
+        DODECAHEDRON
     };
 
     private List<Point> gridPoints = new List<Point>();
@@ -29,7 +30,15 @@ public class Grid_Builder : MonoBehaviour
     private float cos240;
     private float cos300;
 
-    private float arcSin45;
+    private float sin72;//72
+    private float sin144;//144
+    private float sin216;//216
+    private float sin288;//288
+
+    private float cos72;
+    private float cos144;
+    private float cos216;
+    private float cos288;
 
     private List<Point> subPoints = new List<Point>();
 
@@ -59,7 +68,15 @@ public class Grid_Builder : MonoBehaviour
         cos240 = Mathf.Cos(4.18879f);
         cos300 = Mathf.Cos(5.23599f);
 
-        arcSin45 = Mathf.Asin(0.785398f);
+        sin72 = Mathf.Sin(1.25664f);
+        sin144 = Mathf.Sin(2.51327f);
+        sin216 = Mathf.Sin(3.76991f);
+        sin288 = Mathf.Sin(5.02655f);
+
+        cos72 = Mathf.Cos(1.25664f);
+        cos144 = Mathf.Cos(2.51327f);
+        cos216 = Mathf.Cos(3.76991f);
+        cos288 = Mathf.Cos(5.02655f);
     }
 
     private void CreatePoints()
@@ -204,7 +221,7 @@ public class Grid_Builder : MonoBehaviour
         gridPoints.AddRange(secondaryPoints);
     }
 
-    private void CreatePointsRandom()//TODO pick up here
+    private void CreatePointsRandom()
     {
         List<Point> mainPoints = new List<Point>();
         List<Point> secondaryPoints = new List<Point>();
@@ -277,7 +294,154 @@ public class Grid_Builder : MonoBehaviour
 
     private void CreatePointsPerlin()
     {
+        List<Point> mainPoints = new List<Point>();
+        List<Point> secondaryPoints = new List<Point>();
 
+        int seed = Random.Range(-100, 101);
+
+        //main points
+        for (int i = 1; i <= 6; i++)
+        {
+            if (i == 6)
+            {
+                mainPoints.Add(new Point(i * sin0, Mathf.PerlinNoise(i * sin0 + seed, i * cos0 + seed) * 10, i * cos0, false));
+                mainPoints.Add(new Point(i * sin60, Mathf.PerlinNoise(i * sin60 + seed, i * cos60 + seed) * 10, i * cos60, false));
+                mainPoints.Add(new Point(i * sin120, Mathf.PerlinNoise(i * sin120 + seed, i * cos120 + seed) * 10, i * cos120, false));
+                mainPoints.Add(new Point(i * sin180, Mathf.PerlinNoise(i * sin180 + seed, i * cos180 + seed) * 10, i * cos180, false));
+                mainPoints.Add(new Point(i * sin240, Mathf.PerlinNoise(i * sin240 + seed, i * cos240 + seed) * 10, i * cos240, false));
+                mainPoints.Add(new Point(i * sin300, Mathf.PerlinNoise(i * sin300 + seed, i * cos300 + seed) * 10, i * cos300, false));
+            }
+            else
+            {
+                mainPoints.Add(new Point(i * sin0, Mathf.PerlinNoise(i * sin0 + seed, i * cos0 + seed) * 10, i * cos0));
+                mainPoints.Add(new Point(i * sin60, Mathf.PerlinNoise(i * sin60 + seed, i * cos60 + seed) * 10, i * cos60));
+                mainPoints.Add(new Point(i * sin120, Mathf.PerlinNoise(i * sin120 + seed, i * cos120 + seed) * 10, i * cos120));
+                mainPoints.Add(new Point(i * sin180, Mathf.PerlinNoise(i * sin180 + seed, i * cos180 + seed) * 10, i * cos180));
+                mainPoints.Add(new Point(i * sin240, Mathf.PerlinNoise(i * sin240 + seed, i * cos240 + seed) * 10, i * cos240));
+                mainPoints.Add(new Point(i * sin300, Mathf.PerlinNoise(i * sin300 + seed, i * cos300 + seed) * 10, i * cos300));
+            }
+
+            if (i < 2)
+            {
+                continue;
+            }
+
+            for (int k = (i * 6) - 5; k <= i * 6; k++)
+            {
+                for (float j = 1; j < i; j++)
+                {
+                    //(x1 + k(x2 - x1), y1 + k(y2 - y1))
+                    //Debug.Log(k + "::" + j + "/" + i + "=" + (j / i));
+
+                    float newX = 0;
+                    float newZ = 0;
+
+                    if (k == (i * 6))
+                    {
+                        newX = mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k - 6].Position.x - mainPoints[k - 1].Position.x);
+                        newZ = mainPoints[k - 1].Position.z + (j / i) * (mainPoints[k - 6].Position.z - mainPoints[k - 1].Position.z);
+                        if (i == 6)
+                        {
+                            //Debug.Log(k + "::" + mainPoints[k-1]);
+                            secondaryPoints.Add(new Point(newX, Mathf.PerlinNoise(newX + seed, newZ + seed) * 10, newZ, false));
+                        }
+                        else
+                        {
+                            //Debug.Log(k + "::" + mainPoints[k-1]);
+                            secondaryPoints.Add(new Point(newX, Mathf.PerlinNoise(newX + seed, newZ + seed) * 10, newZ));
+                        }
+                    }
+                    else
+                    {
+                        newX = mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k].Position.x - mainPoints[k - 1].Position.x);
+                        newZ = mainPoints[k - 1].Position.z + (j / i) * (mainPoints[k].Position.z - mainPoints[k - 1].Position.z);
+                        if (i == 6)
+                        {
+                            secondaryPoints.Add(new Point(newX, Mathf.PerlinNoise(newX + seed, newZ + seed) * 10, newZ, false));
+                        }
+                        else
+                        {
+                            secondaryPoints.Add(new Point(newX, Mathf.PerlinNoise(newX + seed, newZ + seed) * 10, newZ));
+                        }
+                    }
+                }
+            }
+        }
+
+        gridPoints.Add(new Point(0, 0, 0, false));
+        gridPoints.AddRange(mainPoints);
+        gridPoints.AddRange(secondaryPoints);
+    }
+
+    private void CreatePointsDodecahedron()//TODO finish this
+    {
+        //https://en.wikipedia.org/wiki/Regular_dodecahedron
+        List<Point> mainPoints = new List<Point>();
+        List<Point> secondaryPoints = new List<Point>();
+
+        //main points
+        for (int i = 1; i <= 5; i++)
+        {
+            if (i == 5)
+            {
+                mainPoints.Add(new Point(i * sin0, 0, i * cos0, false));
+                mainPoints.Add(new Point(i * sin72, 0, i * cos72, false));
+                mainPoints.Add(new Point(i * sin144, 0, i * cos144, false));
+                mainPoints.Add(new Point(i * sin216, 0, i * cos216, false));
+                mainPoints.Add(new Point(i * sin288, 0, i * cos288, false));
+            }
+            else
+            {
+                mainPoints.Add(new Point(i * sin0, 0, i * cos0));
+                mainPoints.Add(new Point(i * sin72, 0, i * cos72));
+                mainPoints.Add(new Point(i * sin144, 0, i * cos144));
+                mainPoints.Add(new Point(i * sin216, 0, i * cos216));
+                mainPoints.Add(new Point(i * sin288, 0, i * cos288));
+            }
+
+            if (i < 2)
+            {
+                continue;
+            }
+
+            for (int k = (i * 5) - 4; k <= i * 5; k++)
+            {
+                for (float j = 1; j < i; j++)
+                {
+                    //(x1 + k(x2 - x1), y1 + k(y2 - y1))
+                    //Debug.Log(k + "::" + j + "/" + i + "=" + (j / i));
+
+                    if (k == (i * 5))
+                    {
+                        if (i == 5)
+                        {
+                            //Debug.Log(k + "::" + mainPoints[k-1]);
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k - 5].Position.x - mainPoints[k - 1].Position.x), 0, mainPoints[k - 1].Position.z + (j / i) * (mainPoints[k - 5].Position.z - mainPoints[k - 1].Position.z), false));
+                        }
+                        else
+                        {
+                            //Debug.Log(k + "::" + mainPoints[k-1]);
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k - 5].Position.x - mainPoints[k - 1].Position.x), 0, mainPoints[k - 1].Position.z + (j / i) * (mainPoints[k - 5].Position.z - mainPoints[k - 1].Position.z)));
+                        }
+                    }
+                    else
+                    {
+                        if (i == 5)
+                        {
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k].Position.x - mainPoints[k - 1].Position.x), 0, mainPoints[k - 1].Position.z + (j / i) * (mainPoints[k].Position.z - mainPoints[k - 1].Position.z), false));
+                        }
+                        else
+                        {
+                            secondaryPoints.Add(new Point(mainPoints[k - 1].Position.x + (j / i) * (mainPoints[k].Position.x - mainPoints[k - 1].Position.x), 0, mainPoints[k - 1].Position.z + (j / i) * (mainPoints[k].Position.z - mainPoints[k - 1].Position.z)));
+                        }
+                    }
+                }
+            }
+        }
+
+        gridPoints.Add(new Point(0, 0, 0, false));
+        gridPoints.AddRange(mainPoints);
+        gridPoints.AddRange(secondaryPoints);
     }
 
     private void CreateConnections()
@@ -338,7 +502,7 @@ public class Grid_Builder : MonoBehaviour
     {
         //int connCount = 0;
 
-        Debug.Log(gridPoints.Count);
+        //Debug.Log(gridPoints.Count);
 
         foreach (Point point in gridPoints)
         {
@@ -373,6 +537,45 @@ public class Grid_Builder : MonoBehaviour
                     point.AddConnection(gridPoints[i]);
                 }
             }
+        }
+    }
+
+    private void CreateConnectionsDodecahedron()//this is busted
+    {
+        //int connCount = 0;
+
+        //Debug.Log(gridPoints.Count);
+
+        foreach (Point point in gridPoints)
+        {
+            for (int i = 0; i < gridPoints.Count; i++)
+            {
+                if (gridPoints[i] == point)
+                {
+                    continue;
+                }
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin0, point.Position.z + cos0))
+                {
+                    point.AddConnection(gridPoints[i]);
+                }
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin72, point.Position.z + cos72))
+                {
+                    point.AddConnection(gridPoints[i]);
+                }
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin144, point.Position.z + cos144))
+                {
+                    point.AddConnection(gridPoints[i]);
+                }
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin216, point.Position.z + cos216))
+                {
+                    point.AddConnection(gridPoints[i]);
+                }
+                else if (gridPoints[i].IsNearEnough(point.Position.x + sin288, point.Position.z + cos288))
+                {
+                    point.AddConnection(gridPoints[i]);
+                }
+            }
+            //break;
         }
     }
 
@@ -460,6 +663,73 @@ public class Grid_Builder : MonoBehaviour
                 }
             }
             //break;
+        }
+
+        //Debug.Log(test.Count);
+        for (int i = 0; i < subPoints.Count; i++)
+        {
+            for (int j = i + 1; j < subPoints.Count; j++)
+            {
+                //Debug.Log(i + "::" + j + "::" + test.Count);
+                if (subPoints[i].IsNearEnough(subPoints[j]))
+                {
+                    subPoints.RemoveAt(j);
+                    j--;
+                }
+            }
+        }
+        //Debug.Log(test.Count);
+    }
+
+    private void CreateSubPointsDodecahedron()//todo pick up here
+    {
+        /* foreach mainPoint in gridPoints
+         *      foreach neighbor in point.Connections
+         *          find a point to the local left of neighbor
+         *                  if local left point has connection back to main point
+         *                      create a new point in the middle of the three points(mainPoint, neighbor, local left point)
+         */
+
+        //ShuffleGridPoints();
+
+        foreach (Point start in gridPoints)
+        {
+            foreach (Point neighbor in start.Connections)
+            {
+                foreach (Point firstLeft in neighbor.Connections)
+                {
+                    if (firstLeft == start || firstLeft == neighbor)
+                    {
+                        continue;
+                    }
+
+                    //Debug.Log("Start -> Neighbor ?? First Left :: " + IsLeft(start.Position, neighbor.Position, firstLeft.Position));
+
+                    if(IsLeft(start.Position, neighbor.Position, firstLeft.Position))
+                    {
+                        foreach (Point secondLeft in firstLeft.Connections)
+                        {
+                            if (secondLeft == start || secondLeft == neighbor || secondLeft == firstLeft)
+                            {
+                                continue;
+                            }
+
+                            //SEE DOODLE ON NOTEBOOK
+                            //Debug.Log("Start -> First Left ?? Second Left :: " + IsLeft(start.Position, firstLeft.Position, secondLeft.Position));
+
+                            if (secondLeft.Connections.Contains(start) && IsLeft(start.Position, firstLeft.Position, secondLeft.Position))
+                            {
+                                Point newPoint = new Point((start.Position.x + neighbor.Position.x + firstLeft.Position.x) / 3, (start.Position.y + neighbor.Position.y + firstLeft.Position.y) / 3, (start.Position.z + neighbor.Position.z + firstLeft.Position.z) / 3, (Random.Range(0, 1f) >= subPointRigidityChance));
+                                subPoints.Add(newPoint);
+                                newPoint.AddConnection(start);
+                                newPoint.AddConnection(neighbor);
+                                newPoint.AddConnection(firstLeft);
+                            }
+                        }
+                    }
+                }
+            }
+            break;
         }
 
         //Debug.Log(test.Count);
@@ -658,6 +928,32 @@ public class Grid_Builder : MonoBehaviour
                             break;
                         case 2:
                             CreateSubPoints3D();
+                            break;
+                        case 3:
+                            UpdateConnections();
+                            break;
+                        case 4:
+                            RemoveRandomConnections();
+                            break;
+                        default:
+                            RebalanceGrid();
+                            break;
+                    }
+                    break;
+                case GenerationType.DODECAHEDRON:
+                    switch (clickCount)
+                    {
+                        case 0:
+                            Debug.Log("Creating points");
+                            CreatePointsDodecahedron();
+                            break;
+                        case 1:
+                            Debug.Log("Creating connections");
+                            CreateConnectionsDodecahedron();
+                            break;
+                        case 2:
+                            Debug.Log("Creating subpoints");
+                            CreateSubPointsDodecahedron();
                             break;
                         case 3:
                             UpdateConnections();

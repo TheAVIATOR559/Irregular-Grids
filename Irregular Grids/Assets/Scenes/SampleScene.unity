@@ -434,6 +434,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 596e6f98e84246d4ca0e036a15e9fe2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Type: 4
   subPointChance: 0.2
   subPointRigidityChance: 0.1
   minConnectionCount: 4
