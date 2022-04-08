@@ -1,32 +1,38 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 
-public class Point
+public class Dec_Point : MonoBehaviour
 {
     public static float COMPARISON_TOLERANCE = 0.1f;
 
-    public Vector3 Position;
-    public List<Point> Connections;
-    public bool IsModifiable = true;
-
-    public Point(float x, float y, float z, bool isModifiable = true)
+    public Vector3 Position
     {
-        Position = new Vector3(x, y, z);
-        IsModifiable = isModifiable;
-        Connections = new List<Point>();
+        get
+        {
+            return transform.position;
+        }
+        set
+        {
+            if(IsModifiable)
+            {
+                transform.position = value;
+            }
+        }
     }
 
-    public void AddConnection(Point other)
+    public List<Dec_Point> Connections = new List<Dec_Point>();
+    public bool IsModifiable = true;
+
+    public void AddConnection(Dec_Point other)
     {
-        if(!this.Connections.Contains(other))
+        if (!this.Connections.Contains(other))
         {
             this.Connections.Add(other);
         }
     }
 
-    public void RemoveConnection(Point other)
+    public void RemoveConnection(Dec_Point other)
     {
         if (this.Connections.Contains(other))
         {
@@ -38,15 +44,15 @@ public class Point
         }
     }
 
-    public void RemoveConnectionMutual(Point other)
+    public void RemoveConnectionMutual(Dec_Point other)
     {
         RemoveConnection(other);
         other.RemoveConnection(this);
     }
 
-    public virtual bool Equals(Point other)
+    public virtual bool Equals(Dec_Point other)
     {
-        if (other.Position.x == this.Position.x 
+        if (other.Position.x == this.Position.x
             && other.Position.y == this.Position.y
             && other.Position.z == this.Position.z)
         {
@@ -56,7 +62,7 @@ public class Point
         return false;
     }
 
-    public bool IsNearEnough(Point other)
+    public bool IsNearEnough(Dec_Point other)
     {
 
         if (Mathf.Abs(this.Position.x - other.Position.x) <= COMPARISON_TOLERANCE
