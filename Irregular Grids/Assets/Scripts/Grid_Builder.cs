@@ -661,14 +661,14 @@ public class Grid_Builder : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetKeyUp(KeyCode.G))
         {
             switch (Type)
             {
                 case GenerationType.FLAT:
                     switch (clickCount)
                     {
-                        case 0:
+                        case 0: 
                             CreatePoints();
                             break;
                         case 1:
@@ -762,7 +762,7 @@ public class Grid_Builder : MonoBehaviour
             }
             clickCount++;
         }
-        else if(Input.GetMouseButtonUp(1))
+        else if(Input.GetKeyUp(KeyCode.H))
         {
             gridPoints.Clear();
             subPoints.Clear();
