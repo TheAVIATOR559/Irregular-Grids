@@ -10,7 +10,7 @@ public class Grid_Face : MonoBehaviour
     [SerializeField] private Vector3 rotation2D;
     [SerializeField] private Vector3 rotation3D;
     [SerializeField] private Vector3 position3D;
-
+    public List<Grid_Face> neighbors = new List<Grid_Face>();
     private void Start()
     {
         origPosition = transform.position;

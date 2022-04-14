@@ -8,18 +8,16 @@ public class Dodecahedron_Builder : MonoBehaviour
     public bool RotateBeforeRemovingConnections = false;
 
     private float sin0;
-    private float sin72;//72
-    private float sin144;//144
-    private float sin216;//216
-    private float sin288;//288
+    private float sin72;
+    private float sin144;
+    private float sin216;
+    private float sin288;
 
     private float cos0;
     private float cos72;
     private float cos144;
     private float cos216;
     private float cos288;
-
-    private List<TempPoint> subPoints = new List<TempPoint>();//todo clean me
 
     [SerializeField] float subPointChance = 0.2f;
     [SerializeField] float subPointRigidityChance = 0.1f;
@@ -30,7 +28,7 @@ public class Dodecahedron_Builder : MonoBehaviour
 
     [SerializeField] private List<Grid_Face> faces = new List<Grid_Face>();
 
-    // Start is called before the first frame update
+    //pre calc necessary angles 
     void Start()
     {
         sin0 = Mathf.Sin(0);
@@ -45,6 +43,8 @@ public class Dodecahedron_Builder : MonoBehaviour
         cos216 = Mathf.Cos(3.76991f);
         cos288 = Mathf.Cos(5.02655f);
     }
+
+
     private void CreatePointsDodecahedron()
     {
         //https://en.wikipedia.org/wiki/Regular_dodecahedron
@@ -56,6 +56,7 @@ public class Dodecahedron_Builder : MonoBehaviour
             //main points
             for (int i = 1; i <= 5; i++)
             {
+                //outer most spinal points
                 if (i == 5)
                 {
                     mainPoints.Add(new Point(i * sin0, 0, i * cos0, false));
@@ -64,6 +65,7 @@ public class Dodecahedron_Builder : MonoBehaviour
                     mainPoints.Add(new Point(i * sin216, 0, i * cos216, false));
                     mainPoints.Add(new Point(i * sin288, 0, i * cos288, false));
                 }
+                //inner spinal points
                 else
                 {
                     mainPoints.Add(new Point(i * sin0, 0, i * cos0));
@@ -78,6 +80,7 @@ public class Dodecahedron_Builder : MonoBehaviour
                     continue;
                 }
 
+                //secondary points
                 for (int k = (i * 5) - 4; k <= i * 5; k++)
                 {
                     for (float j = 1; j < i; j++)
@@ -113,6 +116,7 @@ public class Dodecahedron_Builder : MonoBehaviour
                 }
             }
 
+            //shuffle points into face list and rotate face to correct orientation
             face.CreatePoint(Vector3.zero, false);
 
             foreach (Point point in mainPoints)
@@ -140,6 +144,7 @@ public class Dodecahedron_Builder : MonoBehaviour
 
         foreach(Grid_Face face in faces)
         {
+            //check each point against every other point to see if it is at one of the correct offset positions
             foreach (Dec_Point point in face.points)
             {
                 for (int i = 0; i < face.points.Count; i++)
@@ -187,6 +192,8 @@ public class Dodecahedron_Builder : MonoBehaviour
 
         foreach(Grid_Face face in faces)
         {
+            List<TempPoint> subPoints = new List<TempPoint>();
+
             ShuffleGridPoints(face);
 
             foreach (Dec_Point start in face.points)
@@ -232,6 +239,7 @@ public class Dodecahedron_Builder : MonoBehaviour
                 //break;
             }
 
+            //check for duplicates, remove them and then shuffle points into face list
             for (int i = 0; i < subPoints.Count; i++)
             {
                 for (int j = i + 1; j < subPoints.Count; j++)
@@ -246,6 +254,7 @@ public class Dodecahedron_Builder : MonoBehaviour
                 face.CreateSubPoint(subPoints[i].Position, subPoints[i].IsModifiable, subPoints[i].Connections);
             }
 
+            //create connections for the outer edge points
             foreach (Dec_Point point in face.points)
             {
                 for (int i = 0; i < face.points.Count; i++)
@@ -262,8 +271,6 @@ public class Dodecahedron_Builder : MonoBehaviour
                     }
                 }
             }
-
-            subPoints.Clear();
         }
     }
 
@@ -271,8 +278,14 @@ public class Dodecahedron_Builder : MonoBehaviour
     {
         foreach(Grid_Face face in faces)
         {
+            //shuffle the points list and solidify existing connections
             ShuffleGridPoints(face);
             UpdateConnections(face);
+
+            /*
+             * look at each point
+             *      remove connections at random until min connection count is reached
+             */
 
             List<Dec_Point> connsToRemove = new List<Dec_Point>();
             foreach (Dec_Point point in face.points)
@@ -311,6 +324,7 @@ public class Dodecahedron_Builder : MonoBehaviour
         }
     }
 
+    //move each item in the list to a random position
     private void ShuffleGridPoints(Grid_Face face)
     {
         for (int i = 0; i < face.points.Count; i++)
@@ -327,6 +341,8 @@ public class Dodecahedron_Builder : MonoBehaviour
     {
         foreach(Grid_Face face in faces)
         {
+            //move each point to the average position of its neighbors
+            //unless it is too close a a neighbor
             foreach (Dec_Point point in face.points)
             {
                 if (point.IsModifiable)
@@ -354,6 +370,7 @@ public class Dodecahedron_Builder : MonoBehaviour
         }
     }
 
+    //make sure each point has a connection to its neighbor and vice versa
     private void UpdateConnections(Grid_Face face)
     {
         foreach (Dec_Point core in face.points)
@@ -371,13 +388,39 @@ public class Dodecahedron_Builder : MonoBehaviour
 
     private void WeldFaces()
     {
-        //todo pick up here
         /*
          * foreach face
          *      foreach face's neighbor
          *              check if each point in both face and neighbor is 'near enough' and is not modifiable
          *                      remove the neighbor's point and merge it's connections into face's point connections
          */
+
+        foreach(Grid_Face face in faces)
+        {
+            foreach(Grid_Face neighbor in face.neighbors)
+            {
+                int mergeCount = 0;
+                for(int i = face.points.Count - 1; i >= 0; i--)
+                {
+                    for(int j = neighbor.points.Count - 1; j >= 0; j--)
+                    {
+                        if(mergeCount < 6 && !face.points[i].IsModifiable && !neighbor.points[j].IsModifiable && face.points[i].IsNearEnough(neighbor.points[j]))
+                        {
+                            for(int k = neighbor.points[j].Connections.Count - 1; k >=0; k--)
+                            {
+                                face.points[i].AddConnectionMutual(neighbor.points[j].Connections[k]);
+                                neighbor.points[j].RemoveConnectionMutual(neighbor.points[j].Connections[k]);
+                            }
+
+                            mergeCount++;
+                            neighbor.points.RemoveAt(j);
+                        }
+                    }
+                }
+                //break;
+            }
+            //break;
+        }
     }
 
     private void Update()

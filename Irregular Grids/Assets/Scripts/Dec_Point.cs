@@ -32,6 +32,12 @@ public class Dec_Point : MonoBehaviour
         }
     }
 
+    public void AddConnectionMutual(Dec_Point other)
+    {
+        AddConnection(other);
+        other.AddConnection(this);
+    }
+
     public void RemoveConnection(Dec_Point other)
     {
         if (this.Connections.Contains(other))
